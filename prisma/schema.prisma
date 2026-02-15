@@ -1,0 +1,177 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// 사용자 계정 (응시자)
+model User {
+  id                String         @id @default(cuid())
+  name              String         // 이름
+  examNumber        String         @unique // 수험번호
+  hasCompleted      Boolean        @default(false) // 응시 완료 여부
+  remainingAttempts Int            @default(1) // 남은 테스트 횟수
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  
+  // Relations
+  testAttempts      TestAttempt[]
+  scores            Score[]
+
+  @@index([examNumber])
+  @@index([hasCompleted])
+  @@map("users")
+}
+
+// 관리자 계정
+model Admin {
+  id                String         @id @default(cuid())
+  email             String         @unique
+  passwordHash      String         // bcrypt 해시
+  name              String?
+  role              AdminRole      @default(ADMIN)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@index([email])
+  @@map("admins")
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  ADMIN
+}
+
+// 문제 은행
+model Question {
+  id                String         @id @default(cuid())
+  part              Int            // 1~5
+  questionSetId     String?        // Part 4 문제 세트 ID (같은 정보를 공유하는 3문제)
+  questionOrder     Int?           // 세트 내 문제 순서 (1, 2, 3)
+  questionText      String         @db.Text // 지문 텍스트 또는 질문 텍스트
+  infoText          String?        @db.Text // Part 3, 4 공통/제공 정보 (공통 문장, 일정표, 광고문 등)
+  infoAudioUrl      String?        // Part 3 공통 문장 음원
+  infoAudioFileName String?        // 공통 문장 음원 원본 파일명
+  infoImageUrl      String?        // Part 4 제공 정보 이미지
+  infoImageFileName String?        // 제공 정보 이미지 원본 파일명
+  audioUrl          String?        // MP3 파일 URL (질문 음성)
+  audioFileName     String?        // 원본 파일명
+  imageUrl          String?        // 이미지 URL (Part 2용)
+  imageFileName     String?        // 이미지 원본 파일명
+  preparationTime   Int            @default(45) // 준비 시간 (초)
+  speakingTime      Int            @default(45) // 말하기 시간 (초)
+  questionType      String?        // 문제 유형 (read, describe, respond, etc.)
+  isActive          Boolean        @default(true) // 활성화 여부
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  // Relations
+  testQuestions     TestQuestion[]
+
+  @@index([part, isActive])
+  @@index([questionSetId])
+  @@map("questions")
+}
+
+// 테스트 응시 기록
+model TestAttempt {
+  id                String         @id @default(cuid())
+  userId            String
+  startedAt         DateTime       @default(now())
+  completedAt       DateTime?
+  isCompleted       Boolean        @default(false)
+  isAbandoned       Boolean        @default(false) // 이탈 여부
+  abandonedReason   String?        // 이탈 사유 (새로고침, 브라우저 종료 등)
+  
+  // Relations
+  user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  testQuestions     TestQuestion[]
+  recordings        Recording[]
+
+  @@index([userId])
+  @@index([isCompleted])
+  @@map("test_attempts")
+}
+
+// 테스트 응시 시 추출된 문제들
+model TestQuestion {
+  id                String         @id @default(cuid())
+  testAttemptId     String
+  questionId        String
+  questionNumber    Int            // 1~11
+  part              Int            // 1~5
+  createdAt         DateTime       @default(now())
+
+  // Relations
+  testAttempt       TestAttempt    @relation(fields: [testAttemptId], references: [id], onDelete: Cascade)
+  question          Question       @relation(fields: [questionId], references: [id])
+
+  @@unique([testAttemptId, questionNumber])
+  @@index([testAttemptId])
+  @@map("test_questions")
+}
+
+// 녹음 파일
+model Recording {
+  id                String         @id @default(cuid())
+  testAttemptId     String
+  questionNumber    Int            // 1~11
+  audioUrl          String         // 녹음 파일 URL (S3)
+  audioFileName     String         // 원본 파일명
+  duration          Int?           // 녹음 길이 (초)
+  fileSize          Int?           // 파일 크기 (bytes)
+  uploadedAt        DateTime       @default(now())
+  uploadStatus      UploadStatus   @default(PENDING)
+  uploadRetries     Int            @default(0)
+  
+  // Relations
+  testAttempt       TestAttempt    @relation(fields: [testAttemptId], references: [id], onDelete: Cascade)
+
+  @@unique([testAttemptId, questionNumber])
+  @@index([testAttemptId])
+  @@index([uploadStatus])
+  @@map("recordings")
+}
+
+enum UploadStatus {
+  PENDING
+  UPLOADING
+  COMPLETED
+  FAILED
+}
+
+// 점수 및 성적표
+model Score {
+  id                String         @id @default(cuid())
+  userId            String
+  score             Int            // 0~200
+  cefrLevel         CEFRLevel      // CEFR 레벨
+  pdfUrl            String?        // 성적표 PDF URL
+  pdfFileName       String?
+  testDate          DateTime       @default(now())
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  
+  // Relations
+  user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([testDate])
+  @@map("scores")
+}
+
+enum CEFRLevel {
+  C1            // 200~180
+  B2            // 179~160
+  B1_PLUS       // 159~140
+  B1            // 139~110
+  A2_PLUS       // 109~80
+  A2            // 79~60
+  A1            // 59~40
+  PRE_A1        // 39~0
+}
