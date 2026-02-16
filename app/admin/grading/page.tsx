@@ -125,10 +125,28 @@ export default function GradingPage() {
                           {new Date(recording.uploadedAt).toLocaleString('ko-KR')}
                         </div>
                       </div>
+                      <div className="mb-2">
+                        <a 
+                          href={recording.audioUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-xs text-blue-600 hover:underline"
+                        >
+                          URL 확인: {recording.audioUrl.substring(0, 80)}...
+                        </a>
+                      </div>
                       <audio
                         controls
                         className="w-full"
                         src={recording.audioUrl}
+                        preload="metadata"
+                        onError={(e) => {
+                          console.error("오디오 로드 실패:", recording.audioUrl)
+                          console.error("오디오 에러:", e)
+                        }}
+                        onLoadedMetadata={() => {
+                          console.log("오디오 로드 성공:", recording.audioUrl)
+                        }}
                       >
                         Your browser does not support the audio element.
                       </audio>
