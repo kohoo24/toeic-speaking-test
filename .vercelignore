@@ -1,5 +1,4 @@
 /public/uploads/
-/public/audio/
 .env
 .env.local
 node_modules/

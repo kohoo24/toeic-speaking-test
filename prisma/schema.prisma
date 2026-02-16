@@ -175,3 +175,27 @@ enum CEFRLevel {
   A1            // 59~40
   PRE_A1        // 39~0
 }
+
+// 공통 음원 관리
+model CommonAudio {
+  id                String         @id @default(cuid())
+  audioType         CommonAudioType @unique // 음원 종류
+  audioUrl          String         // 음원 파일 URL
+  audioFileName     String         // 원본 파일명
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@map("common_audios")
+}
+
+enum CommonAudioType {
+  PREPARATION_START  // 준비 시간 시작
+  SPEAKING_START     // 말하기 시작
+  SPEAKING_END       // 말하기 종료
+  NEXT_QUESTION      // 다음 문제
+  PART1_INTRO        // Part 1 설명
+  PART2_INTRO        // Part 2 설명
+  PART3_INTRO        // Part 3 설명
+  PART4_INTRO        // Part 4 설명
+  PART5_INTRO        // Part 5 설명
+}

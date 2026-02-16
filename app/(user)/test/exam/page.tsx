@@ -59,6 +59,7 @@ export default function ExamPage() {
   const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [currentPart, setCurrentPart] = useState<number>(0)
+  const [audioConfig, setAudioConfig] = useState<any>(AUDIO_CONFIG)
   
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
@@ -125,6 +126,29 @@ export default function ExamPage() {
 
   const startTest = async () => {
     try {
+      // 공통 음원 로드
+      const audioRes = await fetch("/api/common-audio")
+      const audioData = await audioRes.json()
+      
+      if (audioData.success && audioData.audios) {
+        // 데이터베이스의 음원으로 config 업데이트
+        setAudioConfig({
+          common: {
+            preparationStart: audioData.audios.PREPARATION_START || AUDIO_CONFIG.common.preparationStart,
+            speakingStart: audioData.audios.SPEAKING_START || AUDIO_CONFIG.common.speakingStart,
+            speakingEnd: audioData.audios.SPEAKING_END || AUDIO_CONFIG.common.speakingEnd,
+            nextQuestion: audioData.audios.NEXT_QUESTION || AUDIO_CONFIG.common.nextQuestion,
+          },
+          parts: {
+            part1: audioData.audios.PART1_INTRO || AUDIO_CONFIG.parts.part1,
+            part2: audioData.audios.PART2_INTRO || AUDIO_CONFIG.parts.part2,
+            part3: audioData.audios.PART3_INTRO || AUDIO_CONFIG.parts.part3,
+            part4: audioData.audios.PART4_INTRO || AUDIO_CONFIG.parts.part4,
+            part5: audioData.audios.PART5_INTRO || AUDIO_CONFIG.parts.part5,
+          }
+        })
+      }
+
       const res = await fetch("/api/test/start", { method: "POST" })
       const data = await res.json()
 
@@ -133,6 +157,12 @@ export default function ExamPage() {
         router.push("/login")
         return
       }
+
+      console.log("테스트 시작 데이터:", {
+        testAttemptId: data.testAttemptId,
+        questionsCount: data.questions?.length,
+        questions: data.questions
+      })
 
       setTestAttemptId(data.testAttemptId)
       setQuestions(data.questions)
@@ -227,7 +257,7 @@ export default function ExamPage() {
       setPhase("part-intro")
       
       // 파트 설명 음원 재생 (최소 5초 표시)
-      const partAudioPath = AUDIO_CONFIG.parts[`part${question.part}` as keyof typeof AUDIO_CONFIG.parts]
+      const partAudioPath = audioConfig.parts[`part${question.part}` as keyof typeof audioConfig.parts]
       
       // 음원 재생 완료 후 다음 단계로 (최소 5초 표시)
       playGuideAudio(partAudioPath, () => {
@@ -312,7 +342,7 @@ export default function ExamPage() {
     const { prepTime } = getAdjustedTimes(question)
     
     // "준비 시간이 시작됩니다" 음원 재생
-    playGuideAudio(AUDIO_CONFIG.common.preparationStart, () => {
+    playGuideAudio(audioConfig.common.preparationStart, () => {
       setPhase("preparing")
       setTimeRemaining(prepTime)
       startTimer(prepTime, () => startRecordingPhase(question))
@@ -328,7 +358,7 @@ export default function ExamPage() {
     const { speakTime } = getAdjustedTimes(question)
     
     // "지금 말씀해 주세요" 음원 재생
-    playGuideAudio(AUDIO_CONFIG.common.speakingStart, () => {
+    playGuideAudio(audioConfig.common.speakingStart, () => {
       setPhase("recording")
       setIsRecording(true)
       setTimeRemaining(speakTime)
@@ -339,18 +369,31 @@ export default function ExamPage() {
   const stopRecordingPhase = () => {
     setIsRecording(false)
     
+    console.log("녹음 종료:", {
+      currentQuestionIndex,
+      totalQuestions: questions.length,
+      isLastQuestion: currentQuestionIndex >= questions.length - 1
+    })
+    
     // "응답 시간이 종료되었습니다" 음원 재생
-    playGuideAudio(AUDIO_CONFIG.common.speakingEnd, () => {
+    playGuideAudio(audioConfig.common.speakingEnd, () => {
       // 음원 재생 후 완료 표시
       setPhase("completed")
       
       // 1초 후 다음 문제 또는 완료
       setTimeout(() => {
+        console.log("다음 단계 결정:", {
+          currentIndex: currentQuestionIndex,
+          questionsLength: questions.length,
+          hasNext: currentQuestionIndex < questions.length - 1
+        })
+        
         if (currentQuestionIndex < questions.length - 1) {
-          playGuideAudio(AUDIO_CONFIG.common.nextQuestion, () => {
+          playGuideAudio(audioConfig.common.nextQuestion, () => {
             startQuestion(currentQuestionIndex + 1, questions)
           })
         } else {
+          console.log("테스트 완료 - complete 페이지로 이동")
           router.push("/test/complete")
         }
       }, 1000)
@@ -562,14 +605,14 @@ export default function ExamPage() {
           {/* 문제 지문/정보 (파트 설명 단계 제외) */}
           {phase !== "part-intro" && (
             <div className="flex-1 overflow-hidden mt-4 p-4 bg-gradient-to-br from-slate-50 to-gray-100 rounded-xl border border-gray-200">
-              <div className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
+              <div className="text-sm font-semibold text-gray-600 mb-3 uppercase tracking-wide">
                 Question {currentQuestion?.questionNumber} · Part {currentQuestion?.part}
               </div>
             
             {/* Part 3, 4: 정보 읽기 단계에서 공통 정보 표시 */}
             {phase === "info-reading" && (currentQuestion?.part === 3 || currentQuestion?.part === 4) && (
-              <div className="space-y-2">
-                <div className={`font-bold text-sm mb-2 flex items-center gap-1 ${
+              <div className="space-y-3">
+                <div className={`font-bold text-lg mb-3 flex items-center gap-2 ${
                   currentQuestion.part === 3 ? 'text-blue-600' : 'text-blue-700'
                 }`}>
                   <span>{currentQuestion.part === 3 ? '📝' : '📋'}</span>
@@ -589,7 +632,7 @@ export default function ExamPage() {
                 
                 {/* 정보 텍스트 */}
                 {currentQuestion.infoText && (
-                  <div className={`text-sm whitespace-pre-wrap leading-snug bg-white p-3 rounded-lg shadow-sm border-l-2 ${
+                  <div className={`text-base whitespace-pre-wrap leading-relaxed bg-white p-4 rounded-lg shadow-sm border-l-4 ${
                     currentQuestion.part === 3 ? 'border-blue-500' : 'border-blue-600'
                   }`}>
                     {currentQuestion.infoText}
@@ -600,8 +643,8 @@ export default function ExamPage() {
             
             {/* Part 3, 4: 질문 단계에서 공통 정보 상단 표시 */}
             {!["info-reading", "part-intro"].includes(phase) && (currentQuestion?.part === 3 || currentQuestion?.part === 4) && currentQuestion?.infoText && (
-              <div className="mb-3 pb-2 border-b border-gray-300">
-                <div className={`text-xs font-bold mb-2 flex items-center gap-1 ${
+              <div className="mb-4 pb-3 border-b-2 border-gray-300">
+                <div className={`text-sm font-bold mb-3 flex items-center gap-2 ${
                   currentQuestion.part === 3 ? 'text-blue-600' : 'text-blue-700'
                 }`}>
                   <span>{currentQuestion.part === 3 ? '📝' : '📋'}</span>
@@ -620,7 +663,7 @@ export default function ExamPage() {
                 )}
                 
                 {/* 공통 텍스트 */}
-                <div className={`text-xs whitespace-pre-wrap leading-snug text-gray-800 bg-white p-2 rounded-lg shadow-sm border-l-2 ${
+                <div className={`text-base whitespace-pre-wrap leading-relaxed text-gray-800 bg-white p-4 rounded-lg shadow-sm border-l-4 ${
                   currentQuestion.part === 3 ? 'border-blue-500' : 'border-blue-600'
                 }`}>
                   {currentQuestion.infoText}
@@ -630,11 +673,11 @@ export default function ExamPage() {
             
             {/* Part 3, 4: 질문 텍스트 표시 (공통 정보 아래) */}
             {(currentQuestion?.part === 3 || currentQuestion?.part === 4) && currentQuestion?.questionText && !["info-reading", "part-intro"].includes(phase) && (
-              <div className="mb-2">
-                <div className="text-blue-700 font-bold text-xs mb-2 flex items-center gap-1">
+              <div className="mb-4">
+                <div className="text-blue-700 font-bold text-base mb-3 flex items-center gap-2">
                   <span>❓</span> 질문
                 </div>
-                <div className="text-sm whitespace-pre-wrap leading-snug text-gray-900 bg-[#E3F2FD] p-3 rounded-lg shadow-sm border-l-2 border-blue-500">
+                <div className="text-lg whitespace-pre-wrap leading-relaxed text-gray-900 bg-[#E3F2FD] p-4 rounded-lg shadow-md border-l-4 border-blue-500">
                   {currentQuestion.questionText}
                 </div>
               </div>
@@ -653,7 +696,7 @@ export default function ExamPage() {
             
             {/* 지문 표시 (Part 3, 4 정보 읽기 단계 제외, Part 3, 4는 위에서 따로 표시) */}
             {currentQuestion?.questionText && !["info-reading"].includes(phase) && currentQuestion.part !== 3 && currentQuestion.part !== 4 && (
-              <div className="text-sm whitespace-pre-wrap leading-snug text-gray-900">
+              <div className="text-lg whitespace-pre-wrap leading-relaxed text-gray-900">
                 {currentQuestion.questionText}
               </div>
             )}
@@ -662,7 +705,7 @@ export default function ExamPage() {
             {phase === "preparing" && currentQuestion && (() => {
               const { prepTime, speakTime } = getAdjustedTimes(currentQuestion)
               return (
-                <div className="mt-2 pt-2 border-t border-gray-300 flex gap-3 text-xs text-gray-500">
+                <div className="mt-3 pt-3 border-t border-gray-300 flex gap-4 text-sm text-gray-600">
                   <span>⏱️ 준비: {prepTime}초</span>
                   <span>🎤 말하기: {speakTime}초</span>
                 </div>

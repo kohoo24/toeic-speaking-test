@@ -58,8 +58,11 @@ export async function POST(req: NextRequest) {
     const selectedQuestions: any[] = []
     let questionNumber = 1
 
+    console.log("=== 문제 추출 시작 ===")
+
     for (const [part, count] of Object.entries(partQuestions)) {
       const partNum = parseInt(part)
+      console.log(`Part ${partNum} 추출 시작 (필요 수: ${count})`)
       
       // Part 3, 4: 세트 단위로 추출
       if (partNum === 3 || partNum === 4) {
@@ -98,6 +101,7 @@ export async function POST(req: NextRequest) {
 
         // 4. 랜덤으로 1세트 선택
         const randomSet = completeSets[Math.floor(Math.random() * completeSets.length)]
+        console.log(`Part ${partNum} 선택된 세트 ID: ${randomSet.setId}, 문제 수: ${randomSet.questions.length}`)
         
         // 5. 세트의 3문제를 순서대로 추가
         for (const q of randomSet.questions) {
@@ -113,6 +117,7 @@ export async function POST(req: NextRequest) {
             questionSetId: q.questionSetId
           })
         }
+        console.log(`Part ${partNum} 추출 완료, 현재 총 문제 수: ${selectedQuestions.length}`)
       } else {
         // 다른 파트: 기존 로직
         const availableQuestions = await prisma.question.findMany({
@@ -127,6 +132,8 @@ export async function POST(req: NextRequest) {
             error: `Part ${partNum}에 충분한 문제가 없습니다 (필요: ${count}, 현재: ${availableQuestions.length})` 
           }, { status: 400 })
         }
+
+        console.log(`Part ${partNum} 사용 가능한 문제: ${availableQuestions.length}개`)
 
         // 랜덤 추출
         const shuffled = availableQuestions.sort(() => 0.5 - Math.random())
@@ -145,8 +152,13 @@ export async function POST(req: NextRequest) {
             questionSetId: q.questionSetId
           })
         }
+        console.log(`Part ${partNum} 추출 완료, 현재 총 문제 수: ${selectedQuestions.length}`)
       }
     }
+
+    console.log(`=== 문제 추출 완료 ===`)
+    console.log(`총 추출된 문제 수: ${selectedQuestions.length}`)
+    console.log(`문제 번호 범위: ${selectedQuestions[0]?.questionNumber} ~ ${selectedQuestions[selectedQuestions.length - 1]?.questionNumber}`)
 
     // TestAttempt 생성
     const testAttempt = await prisma.testAttempt.create({
@@ -187,6 +199,8 @@ export async function POST(req: NextRequest) {
       preparationTime: tq.question.preparationTime,
       speakingTime: tq.question.speakingTime
     }))
+
+    console.log(`응답 데이터 구성 완료: ${questions.length}개 문제`)
 
     return NextResponse.json({
       success: true,

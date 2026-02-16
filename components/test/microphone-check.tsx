@@ -38,26 +38,33 @@ export function MicrophoneCheck({ onPermissionChange }: MicrophoneCheckProps) {
   }
 
   const startAudioLevelMonitoring = (stream: MediaStream) => {
-    audioContextRef.current = new AudioContext()
-    analyserRef.current = audioContextRef.current.createAnalyser()
-    const source = audioContextRef.current.createMediaStreamSource(stream)
-    
-    analyserRef.current.fftSize = 256
-    source.connect(analyserRef.current)
-    
-    const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount)
-    
-    const updateLevel = () => {
-      if (!analyserRef.current) return
+    try {
+      audioContextRef.current = new AudioContext()
+      analyserRef.current = audioContextRef.current.createAnalyser()
+      const source = audioContextRef.current.createMediaStreamSource(stream)
       
-      analyserRef.current.getByteFrequencyData(dataArray)
-      const average = dataArray.reduce((sum, value) => sum + value, 0) / dataArray.length
-      setAudioLevel(Math.min(100, (average / 255) * 100 * 3)) // 증폭
+      analyserRef.current.fftSize = 256
+      analyserRef.current.smoothingTimeConstant = 0.3 // 더 빠른 반응
+      source.connect(analyserRef.current)
       
-      animationFrameRef.current = requestAnimationFrame(updateLevel)
+      const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount)
+      
+      // 즉시 업데이트 시작
+      const updateLevel = () => {
+        if (!analyserRef.current) return
+        
+        analyserRef.current.getByteFrequencyData(dataArray)
+        const average = dataArray.reduce((sum, value) => sum + value, 0) / dataArray.length
+        setAudioLevel(Math.min(100, (average / 255) * 100 * 3)) // 증폭
+        
+        animationFrameRef.current = requestAnimationFrame(updateLevel)
+      }
+      
+      // 딜레이 없이 즉시 시작
+      updateLevel()
+    } catch (error) {
+      console.error("오디오 모니터링 시작 실패:", error)
     }
-    
-    updateLevel()
   }
 
   const stopMicrophone = () => {

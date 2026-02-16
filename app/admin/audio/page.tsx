@@ -36,11 +36,30 @@ export default function AudioManagementPage() {
 
   async function loadAudioStatus() {
     try {
-      const response = await fetch("/api/audio")
+      const response = await fetch("/api/common-audio")
       if (!response.ok) throw new Error("음원 상태 조회 실패")
       
       const data = await response.json()
-      setAudioStatus(data)
+      
+      if (data.success && data.audios) {
+        // 데이터베이스 응답을 기존 형식으로 변환
+        const status: AudioStatus = {
+          common: {
+            preparationStart: !!data.audios.PREPARATION_START,
+            speakingStart: !!data.audios.SPEAKING_START,
+            speakingEnd: !!data.audios.SPEAKING_END,
+            nextQuestion: !!data.audios.NEXT_QUESTION,
+          },
+          parts: {
+            part1: !!data.audios.PART1_INTRO,
+            part2: !!data.audios.PART2_INTRO,
+            part3: !!data.audios.PART3_INTRO,
+            part4: !!data.audios.PART4_INTRO,
+            part5: !!data.audios.PART5_INTRO,
+          }
+        }
+        setAudioStatus(status)
+      }
     } catch (error) {
       console.error("음원 상태 조회 실패:", error)
       toast({
@@ -74,11 +93,24 @@ export default function AudioManagementPage() {
       
       try {
         const formData = new FormData()
-        formData.append("file", file)
-        formData.append("audioType", audioId)
-        formData.append("category", category)
+        formData.append("audioFile", file)
+        
+        // audioId를 데이터베이스 enum 형식으로 변환
+        const audioTypeMap: Record<string, string> = {
+          'preparationStart': 'PREPARATION_START',
+          'speakingStart': 'SPEAKING_START',
+          'speakingEnd': 'SPEAKING_END',
+          'nextQuestion': 'NEXT_QUESTION',
+          'part1': 'PART1_INTRO',
+          'part2': 'PART2_INTRO',
+          'part3': 'PART3_INTRO',
+          'part4': 'PART4_INTRO',
+          'part5': 'PART5_INTRO',
+        }
+        
+        formData.append("audioType", audioTypeMap[audioId] || audioId)
 
-        const response = await fetch("/api/audio", {
+        const response = await fetch("/api/common-audio", {
           method: "POST",
           body: formData
         })
