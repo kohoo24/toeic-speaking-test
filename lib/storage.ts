@@ -12,7 +12,13 @@ export async function uploadToStorage(
     // 파일명 생성 (타임스탬프 + 랜덤 + 원본 파일명)
     const timestamp = Date.now()
     const randomStr = Math.random().toString(36).substring(2, 8)
-    const fileName = `${timestamp}-${randomStr}-${file.name}`
+    
+    // 파일명 정규화: 공백을 언더스코어로 변경, URL-safe하게 만들기
+    const sanitizedFileName = file.name
+      .replace(/\s+/g, '_')  // 공백 → 언더스코어
+      .replace(/[^\w\-\.가-힣]/g, '_')  // 특수문자 제거 (한글, 영문, 숫자, -, _, . 만 허용)
+    
+    const fileName = `${timestamp}-${randomStr}-${sanitizedFileName}`
     
     // 전체 경로
     const filePath = folder ? `${folder}/${fileName}` : fileName
