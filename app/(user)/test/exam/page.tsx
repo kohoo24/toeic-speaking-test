@@ -174,7 +174,7 @@ export default function ExamPage() {
   }
 
   // 공통 음원 재생 헬퍼
-  const playGuideAudio = (audioPath: string, onComplete: () => void) => {
+  const playGuideAudio = (audioPath: string, onComplete: () => void, minDisplayTime: number = 0) => {
     // 기존 음원 정리
     if (guideAudioRef.current) {
       guideAudioRef.current.pause()
@@ -184,15 +184,28 @@ export default function ExamPage() {
     const audio = new Audio(audioPath)
     guideAudioRef.current = audio
     
-    audio.onended = onComplete
+    const startTime = Date.now()
+    
+    const handleComplete = () => {
+      const elapsed = Date.now() - startTime
+      const remainingTime = Math.max(0, minDisplayTime - elapsed)
+      
+      if (remainingTime > 0) {
+        setTimeout(onComplete, remainingTime)
+      } else {
+        onComplete()
+      }
+    }
+    
+    audio.onended = handleComplete
     audio.onerror = () => {
       console.error("안내 음원 재생 실패:", audioPath)
-      onComplete() // 실패해도 진행
+      handleComplete() // 실패해도 최소 시간 대기 후 진행
     }
     
     audio.play().catch(err => {
       console.error("안내 음원 재생 오류:", err)
-      onComplete() // 실패해도 진행
+      handleComplete() // 실패해도 최소 시간 대기 후 진행
     })
   }
 
@@ -213,10 +226,10 @@ export default function ExamPage() {
       setCurrentPart(question.part)
       setPhase("part-intro")
       
-      // 파트 설명 음원 재생
+      // 파트 설명 음원 재생 (최소 5초 표시)
       const partAudioPath = AUDIO_CONFIG.parts[`part${question.part}` as keyof typeof AUDIO_CONFIG.parts]
       
-      // 음원 재생 완료 후 다음 단계로
+      // 음원 재생 완료 후 다음 단계로 (최소 5초 표시)
       playGuideAudio(partAudioPath, () => {
         // Part 3, 4의 경우 첫 문제 전에 정보 읽기 시간 제공
         if ((question.part === 3 || question.part === 4) && question.infoText) {
@@ -224,7 +237,7 @@ export default function ExamPage() {
         } else {
           proceedToQuestionReading(question)
         }
-      })
+      }, 5000)
     } else {
       // Part 3, 4: 이전 문제와 다른 세트인 경우 정보 읽기 시간 제공
       if (question.part === 3 || question.part === 4) {
