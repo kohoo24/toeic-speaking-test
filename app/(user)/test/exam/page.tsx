@@ -682,22 +682,7 @@ export default function ExamPage() {
               </div>
             )}
             
-            {/* Part 3만: 질문 단계에서도 공통 정보 상단 표시 */}
-            {!["info-reading", "part-intro"].includes(phase) && currentQuestion?.part === 3 && currentQuestion?.infoText && (
-              <div className="mb-4 pb-3 border-b-2 border-gray-300">
-                <div className="text-sm font-bold mb-3 flex items-center gap-2 text-blue-600">
-                  <span>📝</span>
-                  공통 문장
-                </div>
-                
-                {/* 공통 텍스트 */}
-                <div className="text-base whitespace-pre-wrap leading-relaxed text-gray-800 bg-white p-4 rounded-lg shadow-sm border-l-4 border-blue-500">
-                  {currentQuestion.infoText}
-                </div>
-              </div>
-            )}
-            
-            {/* Part 3, 4: 질문 텍스트 표시 */}
+            {/* Part 3, 4: 질문 텍스트 표시 (공통 정보는 info-reading 단계에서만 표시) */}
             {(currentQuestion?.part === 3 || currentQuestion?.part === 4) && currentQuestion?.questionText && !["info-reading", "part-intro"].includes(phase) && (
               <div className="mb-4 flex flex-col items-center">
                 <div className="text-blue-700 font-bold text-base mb-3 flex items-center gap-2">
