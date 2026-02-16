@@ -530,9 +530,11 @@ export default function ExamPage() {
       <div className="flex-shrink-0 px-6 py-4 bg-white shadow-md">
         <div className="max-w-5xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-[#2C2C2E] rounded-[14px] flex items-center justify-center shadow-md">
-              <span className="text-xl font-bold text-white">T</span>
-            </div>
+            <img 
+              src="/assessmentkorea.png" 
+              alt="Assessment Korea" 
+              className="h-10 w-auto object-contain"
+            />
             <div>
               <h1 className="text-xl font-bold text-gray-900">TOEIC Speaking Test</h1>
               <p className="text-sm text-gray-500">Part {currentQuestion?.part}</p>
