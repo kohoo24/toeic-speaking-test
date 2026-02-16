@@ -18,13 +18,27 @@ export async function uploadToStorage(
     const filePath = folder ? `${folder}/${fileName}` : fileName
     const bucketName = STORAGE_BUCKETS[bucket]
 
-    console.log('Storage 업로드 시작:', { bucket: bucketName, path: filePath, size: file.size })
+    console.log('[Storage] 업로드 시작:', { 
+      bucket: bucketName, 
+      path: filePath, 
+      size: file.size,
+      type: file.type,
+      originalName: file.name
+    })
+
+    // Supabase 클라이언트 상태 확인
+    console.log('[Storage] Supabase 설정:', {
+      hasSupabase: !!supabase,
+      bucketExists: !!bucketName
+    })
 
     // ArrayBuffer를 Blob으로 변환
     const bytes = await file.arrayBuffer()
     const blob = new Blob([bytes], { type: file.type })
+    console.log('[Storage] Blob 생성 완료:', { blobSize: blob.size, blobType: blob.type })
 
     // Supabase Storage에 업로드
+    console.log('[Storage] Supabase 업로드 요청 시작...')
     const { data, error } = await supabase.storage
       .from(bucketName)
       .upload(filePath, blob, {
@@ -33,23 +47,33 @@ export async function uploadToStorage(
       })
 
     if (error) {
-      console.error('Storage 업로드 실패:', error)
+      console.error('[Storage] 업로드 실패 (Supabase 에러):', {
+        message: error.message,
+        statusCode: error.statusCode,
+        error: error
+      })
       throw new Error(`Storage upload failed: ${error.message}`)
     }
 
-    console.log('Storage 업로드 성공:', data)
+    console.log('[Storage] Supabase 업로드 성공:', data)
 
     // Public URL 생성
     const { data: urlData } = supabase.storage
       .from(bucketName)
       .getPublicUrl(filePath)
 
+    console.log('[Storage] Public URL 생성:', urlData.publicUrl)
+
     return {
       url: urlData.publicUrl,
       path: filePath
     }
   } catch (error) {
-    console.error('uploadToStorage 오류:', error)
+    console.error('[Storage] uploadToStorage 최종 오류:', {
+      errorType: error instanceof Error ? error.constructor.name : typeof error,
+      errorMessage: error instanceof Error ? error.message : String(error),
+      errorStack: error instanceof Error ? error.stack : 'No stack'
+    })
     throw error
   }
 }

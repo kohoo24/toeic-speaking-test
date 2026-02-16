@@ -35,12 +35,17 @@ export async function GET(req: NextRequest) {
 // POST: 문제 등록
 export async function POST(req: NextRequest) {
   try {
+    console.log("=== 문제 등록 시작 ===")
+    
     const session = await auth()
+    console.log("인증 확인:", { authenticated: !!session, role: session?.user?.role })
     
     if (!session || session.user.role !== "admin") {
+      console.error("권한 없음:", { session: !!session, role: session?.user?.role })
       return NextResponse.json({ error: "권한이 없습니다" }, { status: 403 })
     }
 
+    console.log("FormData 파싱 시작")
     const formData = await req.formData()
     const part = parseInt(formData.get("part") as string)
     const questionText = formData.get("questionText") as string || ""
@@ -51,6 +56,15 @@ export async function POST(req: NextRequest) {
     const preparationTime = parseInt(formData.get("preparationTime") as string) || 45
     const speakingTime = parseInt(formData.get("speakingTime") as string) || 45
     
+    console.log("파싱된 데이터:", { 
+      part, 
+      questionTextLength: questionText.length,
+      hasInfoText: !!infoText,
+      preparationTime,
+      speakingTime
+    })
+    
+    console.log("파일 추출 시작")
     // Part 4: 3개 음성 파일 + 정보 이미지
     const audioFile1 = await getFileFromFormData(formData, "audioFile1")
     const audioFile2 = await getFileFromFormData(formData, "audioFile2")
@@ -60,6 +74,15 @@ export async function POST(req: NextRequest) {
     // 다른 파트: 단일 음성/이미지
     const audioFile = await getFileFromFormData(formData, "audioFile")
     const imageFile = await getFileFromFormData(formData, "imageFile")
+    
+    console.log("추출된 파일:", {
+      audioFile1: audioFile1?.name,
+      audioFile2: audioFile2?.name,
+      audioFile3: audioFile3?.name,
+      infoImageFile: infoImageFile?.name,
+      audioFile: audioFile?.name,
+      imageFile: imageFile?.name
+    })
 
     if (!part) {
       return NextResponse.json({ error: "필수 항목이 누락되었습니다" }, { status: 400 })
@@ -94,24 +117,40 @@ export async function POST(req: NextRequest) {
 
     // Part 3, 4: 세트로 3개 문제 생성
     if (part === 3 || part === 4) {
+      console.log(`=== Part ${part} 세트 생성 시작 ===`)
       const questionSetId = `set_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      console.log("세트 ID 생성:", questionSetId)
       
       // Part 3: 공통 문장 음원 업로드
       let infoAudioUrl = null
       let infoAudioFileName = null
       if (part === 3 && infoImageFile) {
-        const { url } = await uploadToStorage(infoImageFile, "QUESTIONS", `part${part}`)
-        infoAudioUrl = url
-        infoAudioFileName = infoImageFile.name
+        console.log("Part 3 공통 문장 음원 업로드 시작:", infoImageFile.name)
+        try {
+          const { url } = await uploadToStorage(infoImageFile, "QUESTIONS", `part${part}`)
+          infoAudioUrl = url
+          infoAudioFileName = infoImageFile.name
+          console.log("공통 문장 음원 업로드 성공:", url)
+        } catch (error) {
+          console.error("공통 문장 음원 업로드 실패:", error)
+          throw error
+        }
       }
       
       // Part 4: 정보 이미지 업로드
       let infoImageUrl = null
       let infoImageFileName = null
       if (part === 4 && infoImageFile) {
-        const { url } = await uploadToStorage(infoImageFile, "IMAGES", `part${part}`)
-        infoImageUrl = url
-        infoImageFileName = infoImageFile.name
+        console.log("Part 4 정보 이미지 업로드 시작:", infoImageFile.name)
+        try {
+          const { url } = await uploadToStorage(infoImageFile, "IMAGES", `part${part}`)
+          infoImageUrl = url
+          infoImageFileName = infoImageFile.name
+          console.log("정보 이미지 업로드 성공:", url)
+        } catch (error) {
+          console.error("정보 이미지 업로드 실패:", error)
+          throw error
+        }
       }
 
       // 3개 문제 생성
