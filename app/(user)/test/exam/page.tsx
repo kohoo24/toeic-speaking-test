@@ -682,43 +682,28 @@ export default function ExamPage() {
               </div>
             )}
             
-            {/* Part 3, 4: 질문 단계에서 공통 정보 상단 표시 */}
-            {!["info-reading", "part-intro"].includes(phase) && (currentQuestion?.part === 3 || currentQuestion?.part === 4) && currentQuestion?.infoText && (
+            {/* Part 3만: 질문 단계에서도 공통 정보 상단 표시 */}
+            {!["info-reading", "part-intro"].includes(phase) && currentQuestion?.part === 3 && currentQuestion?.infoText && (
               <div className="mb-4 pb-3 border-b-2 border-gray-300">
-                <div className={`text-sm font-bold mb-3 flex items-center gap-2 ${
-                  currentQuestion.part === 3 ? 'text-blue-600' : 'text-blue-700'
-                }`}>
-                  <span>{currentQuestion.part === 3 ? '📝' : '📋'}</span>
-                  {currentQuestion.part === 3 ? '공통 문장' : '제공 정보'}
+                <div className="text-sm font-bold mb-3 flex items-center gap-2 text-blue-600">
+                  <span>📝</span>
+                  공통 문장
                 </div>
                 
-                {/* Part 4 이미지 */}
-                {currentQuestion.part === 4 && currentQuestion.infoImageUrl && (
-                  <div className="mb-2 flex justify-center">
-                    <img 
-                      src={currentQuestion.infoImageUrl} 
-                      alt="Information" 
-                      className="max-w-xs h-auto rounded-lg border border-blue-300 shadow-sm"
-                    />
-                  </div>
-                )}
-                
                 {/* 공통 텍스트 */}
-                <div className={`text-base whitespace-pre-wrap leading-relaxed text-gray-800 bg-white p-4 rounded-lg shadow-sm border-l-4 ${
-                  currentQuestion.part === 3 ? 'border-blue-500' : 'border-blue-600'
-                }`}>
+                <div className="text-base whitespace-pre-wrap leading-relaxed text-gray-800 bg-white p-4 rounded-lg shadow-sm border-l-4 border-blue-500">
                   {currentQuestion.infoText}
                 </div>
               </div>
             )}
             
-            {/* Part 3, 4: 질문 텍스트 표시 (공통 정보 아래) */}
+            {/* Part 3, 4: 질문 텍스트 표시 */}
             {(currentQuestion?.part === 3 || currentQuestion?.part === 4) && currentQuestion?.questionText && !["info-reading", "part-intro"].includes(phase) && (
-              <div className="mb-4">
+              <div className="mb-4 flex flex-col items-center">
                 <div className="text-blue-700 font-bold text-base mb-3 flex items-center gap-2">
                   <span>❓</span> 질문
                 </div>
-                <div className="text-lg whitespace-pre-wrap leading-relaxed text-gray-900 bg-[#E3F2FD] p-4 rounded-lg shadow-md border-l-4 border-blue-500">
+                <div className="text-lg whitespace-pre-wrap leading-relaxed text-center text-gray-900 bg-[#E3F2FD] p-6 rounded-lg shadow-md border-l-4 border-blue-500 max-w-2xl">
                   {currentQuestion.questionText}
                 </div>
               </div>
