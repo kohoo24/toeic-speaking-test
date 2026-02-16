@@ -26,6 +26,8 @@ export default async function HomePage() {
               src="/assessmentkorea.png" 
               alt="Assessment Korea" 
               className="h-24 w-auto object-contain"
+              onDragStart={(e) => e.preventDefault()}
+              onContextMenu={(e) => e.preventDefault()}
             />
           </div>
           

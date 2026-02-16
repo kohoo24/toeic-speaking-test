@@ -84,10 +84,12 @@ export default function PrecheckPage() {
                     src="/assessmentkorea.png" 
                     alt="Assessment Korea" 
                     className="h-20 w-auto object-contain"
+                    onDragStart={(e) => e.preventDefault()}
+                    onContextMenu={(e) => e.preventDefault()}
                   />
                 </div>
             <h1 className="text-5xl font-extrabold text-gray-900 mb-3">
-            Assessment Korea Toeic speaking mock test
+            Assessment Korea <br />Toeic speaking mock test
             </h1>
             <p className="text-lg text-gray-600">테스트 시작 전 환경을 확인해주세요</p>
             

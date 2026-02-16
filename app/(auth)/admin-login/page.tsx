@@ -52,6 +52,8 @@ export default function AdminLoginPage() {
               src="/assessmentkorea.png" 
               alt="Assessment Korea Logo" 
               className="h-16 w-auto object-contain"
+              onDragStart={(e) => e.preventDefault()}
+              onContextMenu={(e) => e.preventDefault()}
               onError={(e) => {
                 // PNG가 없으면 기본 아이콘 표시
                 e.currentTarget.style.display = 'none'

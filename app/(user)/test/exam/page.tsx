@@ -534,9 +534,11 @@ export default function ExamPage() {
               src="/assessmentkorea.png" 
               alt="Assessment Korea" 
               className="h-10 w-auto object-contain"
+              onDragStart={(e) => e.preventDefault()}
+              onContextMenu={(e) => e.preventDefault()}
             />
             <div>
-              <h1 className="text-xl font-bold text-gray-900">TOEIC Speaking Test</h1>
+              <h1 className="text-xl font-bold text-gray-900">Assessment Korea Toeic speaking mock test</h1>
               <p className="text-sm text-gray-500">Part {currentQuestion?.part}</p>
             </div>
           </div>
@@ -643,7 +645,7 @@ export default function ExamPage() {
           {/* 문제 지문/정보 (파트 설명 단계 제외) */}
           {phase !== "part-intro" && (
             <div className="flex-1 overflow-hidden mt-4 p-4 bg-gradient-to-br from-slate-50 to-gray-100 rounded-xl border border-gray-200">
-              <div className="text-sm font-semibold text-gray-600 mb-3 uppercase tracking-wide">
+              <div className="text-lg font-semibold text-gray-600 mb-3 uppercase tracking-wide">
                 Question {currentQuestion?.questionNumber} · Part {currentQuestion?.part}
               </div>
             
@@ -664,6 +666,8 @@ export default function ExamPage() {
                       src={currentQuestion.infoImageUrl} 
                       alt="Information Image" 
                       className="max-w-full max-h-[200px] object-contain rounded-lg border-2 border-blue-200 shadow-sm"
+                      onDragStart={(e) => e.preventDefault()}
+                      onContextMenu={(e) => e.preventDefault()}
                       onError={(e) => {
                         console.error("Part 4 이미지 로드 실패:", currentQuestion.infoImageUrl)
                         e.currentTarget.style.display = 'none'
@@ -703,6 +707,8 @@ export default function ExamPage() {
                   src={currentQuestion.imageUrl} 
                   alt="Question Image" 
                   className="max-w-full max-h-[450px] object-contain rounded-xl border-4 border-gray-200 shadow-lg"
+                  onDragStart={(e) => e.preventDefault()}
+                  onContextMenu={(e) => e.preventDefault()}
                   onError={(e) => {
                     console.error("이미지 로드 실패:", currentQuestion.imageUrl)
                     e.currentTarget.style.display = 'none'
