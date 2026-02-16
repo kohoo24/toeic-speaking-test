@@ -30,7 +30,7 @@ export default async function HomePage() {
           </div>
           
           <h1 className="text-6xl font-extrabold text-gray-900 mb-6">
-            TOEIC Speaking Test
+          Assessment Korea <br />Toeic speaking mock test
           </h1>
           
           <p className="text-xl text-gray-700 mb-12 leading-relaxed">
@@ -95,7 +95,10 @@ export default async function HomePage() {
       <footer className="border-t border-gray-200 bg-white/50 backdrop-blur-sm py-8 mt-20">
         <div className="container mx-auto px-6 text-center">
           <p className="text-gray-600">
-            © 2026 TOEIC Speaking Test Platform. All rights reserved.
+            © 2026 Assessment Korea Toeic speaking mock test Platform. All rights reserved.
+          </p>
+          <p className="text-gray-600">
+           Made by hohyun GO
           </p>
         </div>
       </footer>

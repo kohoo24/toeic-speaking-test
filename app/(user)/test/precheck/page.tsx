@@ -79,11 +79,15 @@ export default function PrecheckPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="w-full max-w-3xl space-y-8">
           <div className="text-center mb-10">
-            <div className="mx-auto w-20 h-20 bg-[#2C2C2E] rounded-[24px] flex items-center justify-center shadow-xl mb-6">
-              <span className="text-4xl font-bold text-white">T</span>
-            </div>
+                <div className="mx-auto flex items-center justify-center mb-6">
+                  <img 
+                    src="/assessmentkorea.png" 
+                    alt="Assessment Korea" 
+                    className="h-20 w-auto object-contain"
+                  />
+                </div>
             <h1 className="text-5xl font-extrabold text-gray-900 mb-3">
-              TOEIC Speaking Test
+            Assessment Korea Toeic speaking mock test
             </h1>
             <p className="text-lg text-gray-600">테스트 시작 전 환경을 확인해주세요</p>
             
