@@ -61,6 +61,10 @@ export default function ExamPage() {
   const [currentPart, setCurrentPart] = useState<number>(0)
   const [audioConfig, setAudioConfig] = useState<any>(AUDIO_CONFIG)
   
+  // questions를 useRef로도 저장하여 최신 값 유지
+  const questionsRef = useRef<Question[]>([])
+  const currentQuestionIndexRef = useRef<number>(0)
+  
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const hasStartedRef = useRef(false)
@@ -166,6 +170,7 @@ export default function ExamPage() {
 
       setTestAttemptId(data.testAttemptId)
       setQuestions(data.questions)
+      questionsRef.current = data.questions // ref 업데이트
       setIsLoading(false)
       
       // 첫 문제 시작
@@ -248,6 +253,7 @@ export default function ExamPage() {
     }
     
     setCurrentQuestionIndex(index)
+    currentQuestionIndexRef.current = index // ref 업데이트
     
     // 파트가 바뀌었는지 확인
     const isNewPart = currentPart !== question.part
@@ -369,10 +375,14 @@ export default function ExamPage() {
   const stopRecordingPhase = () => {
     setIsRecording(false)
     
+    // ref에서 최신 값 가져오기
+    const currentIndex = currentQuestionIndexRef.current
+    const allQuestions = questionsRef.current
+    
     console.log("녹음 종료:", {
-      currentQuestionIndex,
-      totalQuestions: questions.length,
-      isLastQuestion: currentQuestionIndex >= questions.length - 1
+      currentQuestionIndex: currentIndex,
+      totalQuestions: allQuestions.length,
+      isLastQuestion: currentIndex >= allQuestions.length - 1
     })
     
     // "응답 시간이 종료되었습니다" 음원 재생
@@ -383,14 +393,14 @@ export default function ExamPage() {
       // 1초 후 다음 문제 또는 완료
       setTimeout(() => {
         console.log("다음 단계 결정:", {
-          currentIndex: currentQuestionIndex,
-          questionsLength: questions.length,
-          hasNext: currentQuestionIndex < questions.length - 1
+          currentIndex,
+          questionsLength: allQuestions.length,
+          hasNext: currentIndex < allQuestions.length - 1
         })
         
-        if (currentQuestionIndex < questions.length - 1) {
+        if (currentIndex < allQuestions.length - 1) {
           playGuideAudio(audioConfig.common.nextQuestion, () => {
-            startQuestion(currentQuestionIndex + 1, questions)
+            startQuestion(currentIndex + 1, allQuestions)
           })
         } else {
           console.log("테스트 완료 - complete 페이지로 이동")
