@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
+import { SecurityWrapper } from "@/components/security-wrapper";
 
 export const metadata: Metadata = {
   title: "TOEIC Speaking Test Platform",
@@ -23,15 +24,10 @@ export default function RootLayout({
         />
         <meta name="google" content="notranslate" />
       </head>
-      <body 
-        className="antialiased"
-        onContextMenu={(e) => e.preventDefault()}
-        onCopy={(e) => e.preventDefault()}
-        onCut={(e) => e.preventDefault()}
-        onDragStart={(e) => e.preventDefault()}
-        style={{ userSelect: 'none', WebkitUserSelect: 'none' } as React.CSSProperties}
-      >
-        {children}
+      <body className="antialiased">
+        <SecurityWrapper>
+          {children}
+        </SecurityWrapper>
         <Toaster />
       </body>
     </html>
