@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { writeFile, mkdir } from "fs/promises"
-import { join } from "path"
+import { uploadToStorage } from "@/lib/storage"
 
 // Node.js runtime 명시
 export const runtime = 'nodejs'
@@ -58,34 +57,27 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // 파일 저장
-    const bytes = await file.arrayBuffer()
-    const buffer = Buffer.from(bytes)
-    
-    const uploadDir = join(process.cwd(), "public", "audio", "common")
-    await mkdir(uploadDir, { recursive: true })
+    // 파일 업로드 (Supabase Storage)
+    const folder = audioType.startsWith('PART') ? 'parts' : 'common'
+    const { url: audioUrl, path: storagePath } = await uploadToStorage(
+      file,
+      "COMMON_AUDIO",
+      folder
+    )
 
-    // 타임스탬프 추가하여 파일명 중복 방지
-    const timestamp = Date.now()
-    const fileName = `${timestamp}-${file.name}`
-    const filePath = join(uploadDir, fileName)
-    await writeFile(filePath, buffer)
-
-    const audioUrl = `/audio/common/${fileName}`
-
-    console.log("파일 저장 완료:", { filePath, audioUrl })
+    console.log("파일 저장 완료:", { audioType, audioUrl, storagePath })
 
     // 데이터베이스에 저장 또는 업데이트
     const audio = await prisma.commonAudio.upsert({
       where: { audioType: audioType as any },
       update: {
         audioUrl,
-        audioFileName: fileName,
+        audioFileName: file.name,
       },
       create: {
         audioType: audioType as any,
         audioUrl,
-        audioFileName: fileName,
+        audioFileName: file.name,
       }
     })
 

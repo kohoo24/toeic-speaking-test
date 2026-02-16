@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
-import { uploadFile, getFileFromFormData } from "@/lib/upload"
+import { uploadToStorage, getFileFromFormData } from "@/lib/storage"
 
 // Node.js runtime 명시
 export const runtime = 'nodejs'
@@ -100,7 +100,8 @@ export async function POST(req: NextRequest) {
       let infoAudioUrl = null
       let infoAudioFileName = null
       if (part === 3 && infoImageFile) {
-        infoAudioUrl = await uploadFile(infoImageFile, "questions")
+        const { url } = await uploadToStorage(infoImageFile, "QUESTIONS", `part${part}`)
+        infoAudioUrl = url
         infoAudioFileName = infoImageFile.name
       }
       
@@ -108,7 +109,8 @@ export async function POST(req: NextRequest) {
       let infoImageUrl = null
       let infoImageFileName = null
       if (part === 4 && infoImageFile) {
-        infoImageUrl = await uploadFile(infoImageFile, "images")
+        const { url } = await uploadToStorage(infoImageFile, "IMAGES", `part${part}`)
+        infoImageUrl = url
         infoImageFileName = infoImageFile.name
       }
 
@@ -119,7 +121,7 @@ export async function POST(req: NextRequest) {
       const questions = []
 
       for (let i = 0; i < 3; i++) {
-        const audioUrl = await uploadFile(audioFiles[i], "questions")
+        const { url: audioUrl } = await uploadToStorage(audioFiles[i], "QUESTIONS", `part${part}`)
         const audioFileName = audioFiles[i].name
 
         const question = await prisma.question.create({
@@ -156,12 +158,14 @@ export async function POST(req: NextRequest) {
     let imageFileName = null
 
     if (audioFile) {
-      audioUrl = await uploadFile(audioFile, "questions")
+      const { url } = await uploadToStorage(audioFile, "QUESTIONS", `part${part}`)
+      audioUrl = url
       audioFileName = audioFile.name
     }
 
     if (imageFile) {
-      imageUrl = await uploadFile(imageFile, "images")
+      const { url } = await uploadToStorage(imageFile, "IMAGES", `part${part}`)
+      imageUrl = url
       imageFileName = imageFile.name
     }
 
@@ -207,6 +211,15 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: "필수 항목이 누락되었습니다" }, { status: 400 })
     }
 
+    // 기존 문제 조회
+    const existingQuestion = await prisma.question.findUnique({
+      where: { id: questionId }
+    })
+
+    if (!existingQuestion) {
+      return NextResponse.json({ error: "문제를 찾을 수 없습니다" }, { status: 404 })
+    }
+
     const updateData: any = { 
       questionText,
       preparationTime,
@@ -214,12 +227,14 @@ export async function PUT(req: NextRequest) {
     }
 
     if (audioFile) {
-      updateData.audioUrl = await uploadFile(audioFile, "questions")
+      const { url } = await uploadToStorage(audioFile, "QUESTIONS", `part${existingQuestion.part}`)
+      updateData.audioUrl = url
       updateData.audioFileName = audioFile.name
     }
 
     if (imageFile) {
-      updateData.imageUrl = await uploadFile(imageFile, "images")
+      const { url } = await uploadToStorage(imageFile, "IMAGES", `part${existingQuestion.part}`)
+      updateData.imageUrl = url
       updateData.imageFileName = imageFile.name
     }
 

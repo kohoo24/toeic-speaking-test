@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
-import { uploadFile, getFileFromFormData } from "@/lib/upload"
+import { uploadToStorage, getFileFromFormData } from "@/lib/storage"
 
 // Node.js runtime 명시
 export const runtime = 'nodejs'
@@ -36,8 +36,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "유효하지 않은 테스트입니다" }, { status: 403 })
     }
 
-    // 파일 업로드
-    const audioUrl = await uploadFile(audioFile, "recordings")
+    // 파일 업로드 (Supabase Storage)
+    const { url: audioUrl, path: storagePath } = await uploadToStorage(
+      audioFile,
+      "RECORDINGS",
+      testAttemptId
+    )
 
     // Recording 생성 또는 업데이트
     const recording = await prisma.recording.upsert({
