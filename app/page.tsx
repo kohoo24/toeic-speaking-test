@@ -21,8 +21,12 @@ export default async function HomePage() {
       {/* Hero Section */}
       <div className="container mx-auto px-6 py-20">
         <div className="text-center max-w-4xl mx-auto mb-16">
-          <div className="w-24 h-24 bg-[#2C2C2E] rounded-[28px] flex items-center justify-center mx-auto mb-8 shadow-2xl">
-            <span className="text-5xl font-bold text-white">T</span>
+          <div className="flex items-center justify-center mx-auto mb-8">
+            <img 
+              src="/assessmentkorea.png" 
+              alt="Assessment Korea" 
+              className="h-24 w-auto object-contain"
+            />
           </div>
           
           <h1 className="text-6xl font-extrabold text-gray-900 mb-6">
