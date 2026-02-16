@@ -13,10 +13,11 @@ export async function uploadToStorage(
     const timestamp = Date.now()
     const randomStr = Math.random().toString(36).substring(2, 8)
     
-    // 파일명 정규화: 공백을 언더스코어로 변경, URL-safe하게 만들기
+    // 파일명 정규화: Supabase Storage는 URL-safe 문자만 허용
+    // 영문, 숫자, 하이픈, 언더스코어, 점만 허용
     const sanitizedFileName = file.name
       .replace(/\s+/g, '_')  // 공백 → 언더스코어
-      .replace(/[^\w\-\.가-힣]/g, '_')  // 특수문자 제거 (한글, 영문, 숫자, -, _, . 만 허용)
+      .replace(/[^a-zA-Z0-9\-_.]/g, '')  // 영문, 숫자, -, _, . 만 허용 (한글 및 특수문자 제거)
     
     const fileName = `${timestamp}-${randomStr}-${sanitizedFileName}`
     
