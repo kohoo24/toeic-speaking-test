@@ -60,3 +60,5 @@ next-env.d.ts
 /public/audio/parts/*.mp3
 !/public/audio/common/.gitkeep
 !/public/audio/parts/.gitkeep
+
+.vercel

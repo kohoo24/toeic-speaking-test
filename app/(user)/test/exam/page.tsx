@@ -362,7 +362,7 @@ export default function ExamPage() {
   }
 
   const uploadRecording = async (blob: Blob) => {
-    setPhase("uploading")
+    // Phase는 stopRecordingPhase에서 관리하므로 여기서 변경하지 않음
     
     try {
       const formData = new FormData()
@@ -378,16 +378,14 @@ export default function ExamPage() {
       const result = await res.json()
 
       if (result.success) {
+        console.log("녹음 업로드 성공")
         setRecordedBlob(null)
-        // 업로드 완료 후 stopRecordingPhase에서 처리한 플로우 계속 진행
       } else {
         console.error("녹음 업로드 실패:", result)
-        // 실패해도 진행 (재시도 로직 제거)
         setRecordedBlob(null)
       }
     } catch (error) {
       console.error("녹음 업로드 오류:", error)
-      // 실패해도 진행
       setRecordedBlob(null)
     }
   }
