@@ -105,10 +105,10 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Part 4는 infoText와 3개 음성 파일 필수
+    // Part 4는 (텍스트 또는 이미지) + 3개 음성 파일 필수
     if (part === 4) {
-      if (!infoText) {
-        return NextResponse.json({ error: "Part 4는 제공 정보(텍스트)가 필요합니다" }, { status: 400 })
+      if (!infoText && !infoImageFile) {
+        return NextResponse.json({ error: "Part 4는 제공 정보(텍스트 또는 이미지)가 필요합니다" }, { status: 400 })
       }
       if (!audioFile1 || !audioFile2 || !audioFile3) {
         return NextResponse.json({ error: "Part 4는 3개의 음성 파일이 필요합니다" }, { status: 400 })

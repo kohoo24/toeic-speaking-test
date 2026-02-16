@@ -253,9 +253,6 @@ export default function ExamPage() {
       return
     }
     
-    setCurrentQuestionIndex(index)
-    currentQuestionIndexRef.current = index // ref 업데이트
-    
     // 파트가 바뀌었는지 확인 (ref 사용)
     const isNewPart = currentPartRef.current !== question.part
     
@@ -266,6 +263,7 @@ export default function ExamPage() {
     })
     
     if (isNewPart) {
+      // 새 파트 시작: 파트 설명 화면 먼저 보여주기
       setCurrentPart(question.part)
       currentPartRef.current = question.part // ref 업데이트
       setPhase("part-intro")
@@ -275,24 +273,44 @@ export default function ExamPage() {
       
       // 음원 재생 완료 후 다음 단계로 (최소 5초 표시)
       playGuideAudio(partAudioPath, () => {
-        // Part 3, 4의 경우 첫 문제 전에 정보 읽기 시간 제공
-        if ((question.part === 3 || question.part === 4) && question.infoText) {
+        // 파트 인트로 완료 후 currentQuestionIndex 설정 (깜빡임 방지)
+        setCurrentQuestionIndex(index)
+        currentQuestionIndexRef.current = index
+        
+        // Part 3: 항상 공통 문장 읽기 (파트 설명 직후)
+        if (question.part === 3) {
           startInfoReading(question)
-        } else {
+        } 
+        // Part 4: 첫 문제에서만 정보 읽기 (텍스트 또는 이미지)
+        else if (question.part === 4 && (question.infoText || question.infoImageUrl)) {
+          startInfoReading(question)
+        } 
+        else {
           proceedToQuestionReading(question)
         }
       }, 5000)
     } else {
-      // Part 3, 4: 이전 문제와 다른 세트인 경우 정보 읽기 시간 제공
+      // 같은 파트 내에서 문제 진행
+      setCurrentQuestionIndex(index)
+      currentQuestionIndexRef.current = index
+      
+      // Part 3, 4: 세트의 첫 문제인지 확인 (questionOrder === 1)
       if (question.part === 3 || question.part === 4) {
-        const prevQuestion = index > 0 ? qs[index - 1] : null
-        const isNewSet = !prevQuestion || 
-                        prevQuestion.part !== question.part ||
-                        (question as any).questionSetId !== (prevQuestion as any).questionSetId
+        const questionOrder = (question as any).questionOrder
         
-        if (isNewSet && question.infoText) {
-          startInfoReading(question)
+        // 세트의 첫 문제 (questionOrder === 1)일 때만 info-reading
+        if (questionOrder === 1) {
+          if (question.part === 3) {
+            // Part 3: 항상 공통 문장 읽기
+            startInfoReading(question)
+          } else if (question.part === 4 && (question.infoText || question.infoImageUrl)) {
+            // Part 4: 정보가 있을 때만 읽기
+            startInfoReading(question)
+          } else {
+            proceedToQuestionReading(question)
+          }
         } else {
+          // 세트 내 2번째, 3번째 문제는 바로 질문으로
           proceedToQuestionReading(question)
         }
       } else {
