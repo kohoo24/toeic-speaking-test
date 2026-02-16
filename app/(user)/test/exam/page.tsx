@@ -64,6 +64,7 @@ export default function ExamPage() {
   // questions를 useRef로도 저장하여 최신 값 유지
   const questionsRef = useRef<Question[]>([])
   const currentQuestionIndexRef = useRef<number>(0)
+  const currentPartRef = useRef<number>(0) // currentPart도 ref로 관리
   
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
@@ -255,11 +256,18 @@ export default function ExamPage() {
     setCurrentQuestionIndex(index)
     currentQuestionIndexRef.current = index // ref 업데이트
     
-    // 파트가 바뀌었는지 확인
-    const isNewPart = currentPart !== question.part
+    // 파트가 바뀌었는지 확인 (ref 사용)
+    const isNewPart = currentPartRef.current !== question.part
+    
+    console.log("파트 체크:", {
+      currentPartRef: currentPartRef.current,
+      questionPart: question.part,
+      isNewPart
+    })
     
     if (isNewPart) {
       setCurrentPart(question.part)
+      currentPartRef.current = question.part // ref 업데이트
       setPhase("part-intro")
       
       // 파트 설명 음원 재생 (최소 5초 표시)
@@ -636,6 +644,11 @@ export default function ExamPage() {
                       src={currentQuestion.infoImageUrl} 
                       alt="Information Image" 
                       className="max-w-full max-h-[200px] object-contain rounded-lg border-2 border-blue-200 shadow-sm"
+                      onError={(e) => {
+                        console.error("Part 4 이미지 로드 실패:", currentQuestion.infoImageUrl)
+                        e.currentTarget.style.display = 'none'
+                      }}
+                      onLoad={() => console.log("Part 4 이미지 로드 성공:", currentQuestion.infoImageUrl)}
                     />
                   </div>
                 )}
@@ -700,6 +713,11 @@ export default function ExamPage() {
                   src={currentQuestion.imageUrl} 
                   alt="Question Image" 
                   className="max-w-full max-h-[450px] object-contain rounded-xl border-4 border-gray-200 shadow-lg"
+                  onError={(e) => {
+                    console.error("이미지 로드 실패:", currentQuestion.imageUrl)
+                    e.currentTarget.style.display = 'none'
+                  }}
+                  onLoad={() => console.log("이미지 로드 성공:", currentQuestion.imageUrl)}
                 />
               </div>
             )}
