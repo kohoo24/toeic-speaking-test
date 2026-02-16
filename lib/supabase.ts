@@ -22,16 +22,23 @@ if (!supabaseUrl) {
   supabaseUrl = `https://${projectRef}.supabase.co`
 }
 
-// Supabase anon key (환경 변수에서 가져오거나, 없으면 서비스 역할 키 사용)
-const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_KEY
+// Service Role Key를 우선 사용 (RLS 우회)
+const supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY
 
 if (!supabaseKey) {
-  throw new Error('SUPABASE_ANON_KEY or SUPABASE_SERVICE_KEY is required')
+  throw new Error('SUPABASE_SERVICE_KEY or SUPABASE_ANON_KEY is required')
 }
 
 export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
-    persistSession: false
+    persistSession: false,
+    autoRefreshToken: false,
+  },
+  // Service role key 사용 시 RLS 우회
+  global: {
+    headers: {
+      'apikey': supabaseKey,
+    }
   }
 })
 
