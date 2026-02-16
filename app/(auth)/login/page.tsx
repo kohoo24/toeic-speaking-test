@@ -46,8 +46,20 @@ export default function UserLoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-[#E1F5FE] p-4">
       <Card className="w-full max-w-md shadow-xl border-0 rounded-[32px]">
         <CardHeader className="space-y-4 pb-8">
-          <div className="mx-auto w-16 h-16 bg-[#2C2C2E] rounded-[20px] flex items-center justify-center shadow-lg">
-            <span className="text-3xl font-bold text-white">T</span>
+          <div className="mx-auto flex items-center justify-center">
+            <img 
+              src="/assessmentkorea.png" 
+              alt="Assessment Korea Logo" 
+              className="h-16 w-auto object-contain"
+              onError={(e) => {
+                // PNG가 없으면 기본 로고 표시
+                e.currentTarget.style.display = 'none'
+                const fallback = document.createElement('div')
+                fallback.className = 'w-16 h-16 bg-[#2C2C2E] rounded-[20px] flex items-center justify-center shadow-lg'
+                fallback.innerHTML = '<span class="text-3xl font-bold text-white">T</span>'
+                e.currentTarget.parentElement?.appendChild(fallback)
+              }}
+            />
           </div>
           <CardTitle className="text-4xl font-extrabold text-center text-gray-900">
             TOEIC Speaking Test

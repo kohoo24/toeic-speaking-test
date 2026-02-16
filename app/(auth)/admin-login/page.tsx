@@ -47,8 +47,20 @@ export default function AdminLoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-[#B3E5FC] p-4">
       <Card className="w-full max-w-md shadow-xl border-0 rounded-[32px]">
         <CardHeader className="space-y-4 pb-8">
-          <div className="mx-auto w-16 h-16 bg-[#2C2C2E] rounded-[20px] flex items-center justify-center shadow-lg">
-            <Shield className="h-8 w-8 text-white" />
+          <div className="mx-auto flex items-center justify-center">
+            <img 
+              src="/assessmentkorea.png" 
+              alt="Assessment Korea Logo" 
+              className="h-16 w-auto object-contain"
+              onError={(e) => {
+                // PNG가 없으면 기본 아이콘 표시
+                e.currentTarget.style.display = 'none'
+                const fallback = document.createElement('div')
+                fallback.className = 'w-16 h-16 bg-[#2C2C2E] rounded-[20px] flex items-center justify-center shadow-lg'
+                fallback.innerHTML = '<svg class="h-8 w-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>'
+                e.currentTarget.parentElement?.appendChild(fallback)
+              }}
+            />
           </div>
           <CardTitle className="text-4xl font-extrabold text-center text-gray-900">
             관리자 로그인
